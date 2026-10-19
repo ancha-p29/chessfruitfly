@@ -1,0 +1,170 @@
+{
+  "rules": {
+    "chessFriendCodes": {
+      "$code": {
+        ".read": true,
+        ".validate": "newData.isString()",
+        ".write": "auth != null && ((newData.val() == auth.uid && (!data.exists() || data.val() == auth.uid)) || (!newData.exists() && data.exists() && data.val() == auth.uid))"
+      }
+    },
+    "chessFriends": {
+      "$uid": {
+        "$friendUid": {
+          "$other": {
+            ".validate": false
+          },
+          ".validate": "newData.hasChildren(['code', 'name', 'addedAt'])",
+          "addedAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "code": {
+            ".validate": "newData.isString() && newData.val().length == 6"
+          },
+          "name": {
+            ".validate": "newData.isString()"
+          }
+        },
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "chessInvites": {
+      "$uid": {
+        "$inviteId": {
+          "$other": {
+            ".validate": false
+          },
+          ".validate": "newData.hasChildren(['fromUid', 'fromName', 'roomCode', 'ts'])",
+          "fromName": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "fromUid": {
+            ".validate": "newData.isString() && newData.val() == auth.uid"
+          },
+          "roomCode": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "ts": {
+            ".validate": "newData.isNumber()"
+          }
+        },
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null"
+      }
+    },
+    "chessPresence": {
+      "$uid": {
+        "$other": {
+          ".validate": false
+        },
+        ".read": "auth != null && (auth.uid == $uid || root.child('chessFriends').child(auth.uid).child($uid).exists())",
+        ".validate": "newData.hasChildren(['name', 'status', 'ts'])",
+        ".write": "auth != null && auth.uid == $uid",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "status": {
+          ".validate": "newData.val() == 'online' || newData.val() == 'in-game'"
+        },
+        "ts": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "chessRooms": {
+      "$roomId": {
+        "$other": {
+          ".validate": false
+        },
+        ".read": true,
+        ".validate": "$roomId.matches(/^[A-Z2-9]{6}$/) && newData.hasChildren(['fen', 'turn', 'status', 'moves', 'players', 'result', 'updatedAt'])",
+        ".write": "auth != null",
+        "fen": {
+          ".validate": "newData.isString() && newData.val().length <= 120"
+        },
+        "moves": {
+          "$idx": {
+            "$other": {
+              ".validate": false
+            },
+            ".validate": "newData.hasChildren(['from', 'to', 'promo', 'san'])",
+            "from": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 63"
+            },
+            "promo": {
+              ".validate": "newData.isString() && newData.val().length <= 1"
+            },
+            "san": {
+              ".validate": "newData.isString() && newData.val().length <= 16"
+            },
+            "to": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 63"
+            }
+          }
+        },
+        "players": {
+          "$other": {
+            ".validate": false
+          },
+          ".validate": "newData.hasChild('white')",
+          "black": {
+            "$other": {
+              ".validate": false
+            },
+            ".validate": "newData.hasChildren(['name', 'connected'])",
+            "connected": {
+              ".validate": "newData.isBoolean()"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 16"
+            }
+          },
+          "white": {
+            "$other": {
+              ".validate": false
+            },
+            ".validate": "newData.hasChildren(['name', 'connected'])",
+            "connected": {
+              ".validate": "newData.isBoolean()"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 16"
+            }
+          }
+        },
+        "result": {
+          ".validate": "newData.isString() && newData.val().length <= 64"
+        },
+        "status": {
+          ".validate": "newData.val() == 'waiting' || newData.val() == 'playing' || newData.val() == 'finished'"
+        },
+        "turn": {
+          ".validate": "newData.val() == 'w' || newData.val() == 'b'"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "chessStats": {
+      "$other": {
+        ".validate": false
+      },
+      ".read": true,
+      ".validate": "newData.hasChildren(['roomsActive', 'updatedAt'])",
+      ".write": "auth != null",
+      "roomsActive": {
+        ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000 && ((!data.exists() && newData.val() == 1) || (data.exists() && (newData.val() == data.val() + 1 || newData.val() == data.val() - 1)))"
+      },
+      "updatedAt": {
+        ".validate": "newData.isNumber()"
+      }
+    },
+    "chessUsers": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    }
+  }
+}
