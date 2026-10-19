@@ -104,6 +104,22 @@
     .dash-chevron{margin-left:auto;color:var(--muted);font-size:12px}
     .dash-game-detail{display:none;padding:2px 12px 13px;font-size:12px;color:var(--muted);line-height:1.5}.dash-game.open .dash-game-detail{display:block}.dash-game-detail p{margin:6px 0 0}.dash-game-detail strong{color:var(--ink)}
     .dash-detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}.dash-detail-grid .dash-stat{padding:7px 4px}.dash-detail-grid .dash-stat strong{font-size:15px}
+    .friends-backdrop{position:fixed;inset:0;background:rgba(7,14,9,.66);display:none;place-items:start center;padding:18px;z-index:11;overflow:auto}.friends-backdrop.show{display:grid}
+    .friends-card{background:var(--panel);border-radius:20px;padding:22px;width:min(450px,100%);box-shadow:var(--shadow);position:relative}.friends-card h2{font-family:'Fredoka';margin:0 0 2px;font-size:24px}
+    .friends-sub{color:var(--muted);font-size:13px;margin:0;line-height:1.45}
+    .friends-section-title{font-family:'Fredoka';font-size:16px;margin:18px 0 8px}
+    .friend-code-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .friend-code{font-family:'Fredoka';font-size:32px;letter-spacing:.14em;line-height:1.1}
+    .friends-note{color:var(--muted);font-size:13px;line-height:1.45;margin:9px 0 0}
+    .friends-msg{display:none;font-size:13px;font-weight:700;line-height:1.4;margin-top:9px;color:var(--lime-deep)}.friends-msg.show{display:block}
+    .friends-offline{color:var(--danger);background:var(--danger-soft);border-radius:10px;padding:11px 12px;font-size:13px;font-weight:700;line-height:1.4;margin-top:14px}
+    .friend-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}.friend-row:last-child{border-bottom:0}
+    .friend-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:#98a29a}.friend-dot.online{background:var(--lime-deep)}.friend-dot.in-game{background:#e39a1f}
+    .friend-name{font-weight:800;font-size:14px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .friend-status{font-size:12px;color:var(--muted);white-space:nowrap}
+    .friends-empty{color:var(--muted);font-size:13px;line-height:1.45;padding:8px 0}
+    .invite-backdrop{position:fixed;inset:0;background:rgba(7,14,9,.66);display:none;place-items:center;padding:20px;z-index:13}.invite-backdrop.show{display:grid}
+    .invite-card{background:var(--panel);border-radius:20px;padding:22px;width:min(380px,100%);box-shadow:var(--shadow);text-align:center}.invite-card h2{font-family:'Fredoka';margin:0 0 6px;font-size:22px}.invite-card p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.45}
     @media(max-width:860px){.page{align-content:start}.game{grid-template-columns:minmax(0,660px)}.side{min-height:0}.moves{max-height:165px}.bubble{max-width:180px}.board-wrap{border-width:5px}}
     @media(max-width:520px){.page{padding:10px 10px 24px}.auth-bar{margin-bottom:6px}.auth-user{max-width:140px}.player-bar{min-height:66px}.avatar{width:46px;height:46px;border-radius:14px}.bubble{max-width:145px;padding:7px 9px;font-size:11px}.board-wrap{border-radius:12px}.piece{font-size:clamp(33px,11vw,50px)}.coord{font-size:8px}.side{border-radius:16px;padding:16px}.status-label{font-size:21px}.captured{font-size:16px}.game{gap:13px}}
     @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
@@ -114,6 +130,7 @@
   <div class="auth-bar" id="authBar" aria-live="polite">
     <span class="auth-user" id="authUser" hidden></span>
     <button class="auth-button" id="profileBtn" hidden>My progress</button>
+    <button class="auth-button" id="friendsBtn">Friends</button>
     <button class="auth-button" id="loginBtn">Log in</button>
     <button class="auth-button primary" id="signupBtn">Sign up</button>
     <button class="auth-button" id="logoutBtn" hidden>Log out</button>
@@ -223,6 +240,26 @@
     <div id="dashBody"><p class="dash-sub">Loading your games...</p></div>
   </div>
 </div>
+<div class="friends-backdrop" id="friendsModal" role="dialog" aria-modal="true" aria-labelledby="friendsTitle">
+  <div class="friends-card">
+    <button class="auth-close" id="friendsClose" aria-label="Close friends panel">×</button>
+    <h2 id="friendsTitle">Friends</h2>
+    <p class="friends-sub">Add friends with their friend code, see who is online, and challenge them to a game.</p>
+    <div class="friends-offline" id="friendsOffline" hidden>Couldn't connect. Friends need a connection.</div>
+    <div id="friendsMain">
+      <h3 class="friends-section-title">Your friend code</h3>
+      <div class="friend-code-row"><span class="friend-code" id="friendCodeText">------</span><button class="auth-button" id="copyFriendCodeBtn" type="button">Copy</button></div>
+      <p class="friends-note">Share this code with friends outside the game so they can add you.</p>
+      <h3 class="friends-section-title">Add friend</h3>
+      <div class="online-row"><input class="online-input" id="addFriendInput" placeholder="Enter friend code" aria-label="Friend code" maxlength="9" autocomplete="off" /><button class="online-action" id="addFriendBtn" type="button">Add</button></div>
+      <div class="friends-msg" id="addFriendMsg" role="status"></div>
+      <h3 class="friends-section-title">Your friends</h3>
+      <div id="friendsList"><div class="friends-empty">No friends yet. Share your code to get started.</div></div>
+      <p class="friends-note">Friendships are one-way. They won't see you online unless they add you back.</p>
+    </div>
+  </div>
+</div>
+<div class="invite-backdrop" id="inviteModal" role="dialog" aria-modal="true" aria-labelledby="inviteTitle"><div class="invite-card"><h2 id="inviteTitle">Game challenge</h2><p id="inviteText"></p><div class="idle-actions"><button id="inviteDeclineBtn" type="button">Decline</button><button id="inviteAcceptBtn" type="button" class="primary">Accept</button></div></div></div>
 <div class="promo-backdrop" id="promo" role="dialog" aria-modal="true" aria-labelledby="promoTitle"><div class="promo-card"><h2 id="promoTitle">Choose a promotion</h2><p>Your pawn made it. Pick its new job.</p><div class="promo-options" id="promoOptions"></div></div></div>
 <div class="idle-backdrop" id="idleModal" role="dialog" aria-modal="true" aria-labelledby="idleTitle"><div class="idle-card"><h2 id="idleTitle">Do you still want to continue?</h2><p>No move has been made for 2 minutes. Choose Yes to keep playing, or No to resign this game.</p><div class="idle-actions"><button id="idleNoBtn" type="button">No</button><button id="idleYesBtn" type="button" class="primary">Yes</button></div></div></div>
 <div class="resume-backdrop" id="resumeModal" role="dialog" aria-modal="true" aria-labelledby="resumeTitle"><div class="resume-card"><h2 id="resumeTitle">Resume your last game?</h2><p id="resumeText"></p><div class="idle-actions"><button id="resumeDiscardBtn" type="button">Discard</button><button id="resumeBtn" type="button" class="primary">Resume game</button></div></div></div>
@@ -360,7 +397,7 @@
   }
   function resumeSavedGame(data){
     gameVersion++;mode=data.mode;player=data.player||'w';state=data.state;history=data.history;stats=data.stats;flipped=!!data.flipped;selected=null;legalForSelected=[];aiBusy=false;gameOver=false;gameEndType='';gameResult='';onlineMoves=[];resignLoser=null;completionTracked=false;analysisTracked=false;historySaved=false;clueMove=null;clueText.hidden=true;opponentBar.classList.remove('thinking');analysisEl.classList.remove('show');analysisEl.innerHTML='';sideEl.classList.remove('mate');boardWrap.classList.remove('mate');
-    document.getElementById('playWhite').classList.toggle('active',player==='w');document.getElementById('playBlack').classList.toggle('active',player==='b');document.getElementById('yourColor').textContent='Playing '+(player==='w'?'White':'Black');syncModeUI();say('start');render();persistGame();armIdleTimer();
+    document.getElementById('playWhite').classList.toggle('active',player==='w');document.getElementById('playBlack').classList.toggle('active',player==='b');document.getElementById('yourColor').textContent='Playing '+(player==='w'?'White':'Black');syncModeUI();say('start');render();refreshMyPresenceStatus();persistGame();armIdleTimer();
     if(mode==='ai'&&state.turn!==player){var v=gameVersion;window.setTimeout(function(){if(v===gameVersion)aiTurn()},400)}
   }
   function gameInProgress(){return (mode==='ai'||mode==='local')&&history.length>0&&!gameOver}
@@ -470,7 +507,7 @@
     var before=state,mover=before.turn;history.push({state:cloneState(state),stats:cloneStats(stats),note:null});state=apply(state,m);recordMove(before,m,state,mover);history[history.length-1].note=notation(before,m,state);selected=null;legalForSelected=[];clueMove=null;clueText.hidden=true;if(idleOpen)hideIdlePopup();
     if(mode==='ai'){if(!fromAI&&m.captured!='.')say('hurt');if(fromAI&&m.captured!='.')say('capture')}
     if(mode==='online')onlineMoves.push({from:m.from,to:m.to,promo:m.promo||'',san:history[history.length-1].note});
-    render();var ended=checkEnd();persistGame();armIdleTimer();
+    render();var ended=checkEnd();refreshMyPresenceStatus();persistGame();armIdleTimer();
     if(mode==='online'){syncOnlineMove(ended);return}
     if(!ended&&mode==='ai'&&state.turn!==player){var v=gameVersion;window.setTimeout(function(){if(v===gameVersion)aiTurn()},320)}
   }
@@ -631,7 +668,7 @@
     if(newMode)mode=newMode;player=side||player;gameVersion++;clearSavedGame();flipped=(mode==='ai'||mode==='online')&&player==='b';state=initial();history=[];stats=freshStats();selected=null;legalForSelected=[];aiBusy=false;gameOver=false;gameEndType='';gameResult='';onlineMoves=[];opponentBar.classList.remove('thinking');analysisEl.classList.remove('show');analysisEl.innerHTML='';sideEl.classList.remove('mate');boardWrap.classList.remove('mate');
     document.getElementById('playWhite').classList.toggle('active',player==='w');document.getElementById('playBlack').classList.toggle('active',player==='b');document.getElementById('yourColor').textContent=(mode==='ai'||mode==='online')?'Playing '+(player==='w'?'White':'Black'):'Playing White';completionTracked=false;analysisTracked=false;historySaved=false;resignLoser=null;clueMove=null;clueText.hidden=true;stopIdleTimer();if(idleOpen)hideIdlePopup();if(mode!=='online')track('game_started',{mode:gaMode()});syncModeUI();say('start');render();
     if(mode==='ai'&&player==='b'){var v=gameVersion;window.setTimeout(function(){if(v===gameVersion)aiTurn()},350)}
-    armIdleTimer();
+    armIdleTimer();refreshMyPresenceStatus();
   }
   function showOnlineError(message){onlineError.textContent=message||'';onlineError.classList.toggle('show',!!message)}
   function ensureOnlineAuth(done){if(!auth||currentUser||auth.currentUser){done();return}auth.signInAnonymously().then(function(){done()},function(){done()})}
@@ -646,40 +683,68 @@
   function setOnlineFinished(result){
     gameOver=true;stopIdleTimer();if(idleOpen)hideIdlePopup();gameResult=result||'Game finished';gameEndType=gameResult.toLowerCase().indexOf('checkmate')>=0?'mate':(gameResult==='Draw'?'draw':'finished');
     var whiteWon=gameResult.indexOf('White wins')===0,blackWon=gameResult.indexOf('Black wins')===0,winner=whiteWon?'w':(blackWon?'b':null);setResults(winner);onlineStartedTracked=false;trackGameCompleted();saveGameHistory();
-    statusTitle.textContent=winner?(winner===player?'You win!':'Opponent wins'):'Draw';statusCopy.textContent=gameResult+'. Review the game below or start a rematch.';if(!analysisEl.classList.contains('show'))showAnalysis()
+    statusTitle.textContent=winner?(winner===player?'You win!':'Opponent wins'):'Draw';statusCopy.textContent=gameResult+'. Review the game below or start a rematch.';if(!analysisEl.classList.contains('show'))showAnalysis();refreshMyPresenceStatus()
   }
   function updatePresenceUI(){
     if(!onlineRoom)return;var opponent=player==='w'?(onlineRoom.players&&onlineRoom.players.black):(onlineRoom.players&&onlineRoom.players.white),connected=!!(opponent&&opponent.connected);
     presence.classList.toggle('offline',!!opponent&&!connected);claimWinBtn.hidden=!opponent||connected||onlineRoom.status==='finished';
-    if(!opponent){presenceText.textContent='Waiting for Black to join';roomMeta.textContent='Share this code with the person you want to play.'}
-    else if(connected){presenceText.textContent=lastOpponentConnected===false?'Opponent reconnected':'Both players connected';roomMeta.textContent=onlineRoom.status==='finished'?(onlineRoom.result||'Game finished'):'You are playing live in the same room.'}
+    if(!opponent){presenceText.textContent='Waiting for Black to join';roomMeta.textContent=inviteNote||'Share this code with the person you want to play.'}
+    else if(connected){inviteNote='';presenceText.textContent=lastOpponentConnected===false?'Opponent reconnected':'Both players connected';roomMeta.textContent=onlineRoom.status==='finished'?(onlineRoom.result||'Game finished'):'You are playing live in the same room.'}
     else{presenceText.textContent='Opponent disconnected';roomMeta.textContent='You can wait for them to reconnect or claim the win.'}
     lastOpponentConnected=connected;syncModeUI()
   }
   function onRoomValue(snapshot){
     var room=snapshot.val();if(!room){showOnlineError('This room no longer exists.');onlineReady=false;return}var prevMoves=history.length;onlineRoom=room;onlineReady=room.status==='playing';rebuildOnline(room.moves,room.fen);selected=null;legalForSelected=[];if(room.status==='playing'&&history.length!==prevMoves){if(idleOpen)hideIdlePopup();armIdleTimer()}if(room.status==='playing'&&!onlineStartedTracked){onlineStartedTracked=true;track('game_started',{mode:'online'})}if(room.status==='waiting')onlineStartedTracked=false;
     if(room.status==='finished')setOnlineFinished(room.result||'Game finished');else{gameOver=false;gameEndType='';gameResult='';analysisEl.classList.remove('show');if(!history.length){completionTracked=false;historySaved=false}}
-    updatePresenceUI();render()
+    updatePresenceUI();refreshMyPresenceStatus();render()
   }
   function attachRoom(code,side){
     if(roomRef&&roomListener)roomRef.off('value',roomListener);if(presenceListener)db.ref('.info/connected').off('value',presenceListener);
-    roomCode=code;player=side;flipped=side==='b';roomRef=db.ref('chessRooms/'+code);roomListener=onRoomValue;roomRef.on('value',roomListener,function(){showOnlineError('The room connection was interrupted.')});
+    roomCode=code;player=side;flipped=side==='b';inviteNote='';roomRef=db.ref('chessRooms/'+code);roomListener=onRoomValue;roomRef.on('value',roomListener,function(){showOnlineError('The room connection was interrupted.')});
     presenceListener=function(snapshot){if(snapshot.val()===true&&roomRef){var connectedRef=roomRef.child('players/'+(player==='w'?'white':'black')+'/connected');connectedRef.onDisconnect().set(false);connectedRef.set(true)}};db.ref('.info/connected').on('value',presenceListener);
     onlineLobby.style.display='none';roomView.classList.add('show');roomCodeText.textContent=code;document.getElementById('yourColor').textContent='Playing '+(side==='w'?'White':'Black');showOnlineError('');syncModeUI();render()
   }
-  function createRoom(){
-    if(!db){showOnlineError('Online play could not load. Check your connection and try again.');return}showOnlineError('');
-    ensureOnlineAuth(function(){var tryCreate=function(attempt){var code=makeRoomCode(),target=db.ref('chessRooms/'+code);readRoomOnce(target,function(snapshot){if(snapshot.exists()){if(attempt<4)tryCreate(attempt+1);else showOnlineError('Could not make a unique room. Try again.');return}var fresh=initial();onlineMoves=[];target.set({fen:boardToFen(fresh),turn:'w',status:'waiting',moves:[],players:{white:{name:onlineName,connected:true}},result:'',updatedAt:firebase.database.ServerValue.TIMESTAMP}).then(function(){mode='online';newGame('w','online');attachRoom(code,'w');track('online_room_created')}).catch(function(){showOnlineError('The room could not be created. Try again.')})})};tryCreate(0)})
+  function bumpRoomsActive(delta){
+    /* Fire-and-forget roomsActive counter on chessStats, used only for monitoring. Never awaited; every failure is silent so room creation and leaving always work. A decrement aborts (returns undefined) when the counter is missing or already at zero, so it never goes negative or writes a no-change value. */
+    if(!db)return;
+    try{
+      var p=db.ref('chessStats').transaction(function(current){
+        if(delta<0&&(!current||typeof current.roomsActive!=='number'||current.roomsActive<=0))return undefined;
+        var next=current?Object.assign({},current):{};
+        next.roomsActive=(typeof next.roomsActive==='number'?next.roomsActive:0)+delta;
+        next.updatedAt=firebase.database.ServerValue.TIMESTAMP;
+        return next;
+      });
+      if(p&&p.catch)p.catch(function(){});
+    }catch(e){}
   }
-  function joinRoom(){
-    if(!db){showOnlineError('Online play could not load. Check your connection and try again.');return}var code=document.getElementById('roomCodeInput').value.trim().toUpperCase();if(!/^[A-Z2-9]{6}$/.test(code)){showOnlineError('Enter the six-character room code.');return}var target=db.ref('chessRooms/'+code);showOnlineError('');
+  function createRoom(onCreated){
+    if(!db){showOnlineError('Online play could not load. Check your connection and try again.');return}showOnlineError('');
+    ensureOnlineAuth(function(){var tryCreate=function(attempt){var code=makeRoomCode(),target=db.ref('chessRooms/'+code);readRoomOnce(target,function(snapshot){if(snapshot.exists()){if(attempt<4)tryCreate(attempt+1);else showOnlineError('Could not make a unique room. Try again.');return}var fresh=initial();onlineMoves=[];target.set({fen:boardToFen(fresh),turn:'w',status:'waiting',moves:[],players:{white:{name:onlineName,connected:true}},result:'',updatedAt:firebase.database.ServerValue.TIMESTAMP}).then(function(){bumpRoomsActive(1);mode='online';newGame('w','online');attachRoom(code,'w');track('online_room_created');if(typeof onCreated==='function')onCreated(code)}).catch(function(){showOnlineError('The room could not be created. Try again.')})})};tryCreate(0)})
+  }
+  function joinRoom(){joinRoomWithCode(document.getElementById('roomCodeInput').value.trim().toUpperCase())}
+  function joinRoomWithCode(code){
+    if(!db){showOnlineError('Online play could not load. Check your connection and try again.');return}if(!/^[A-Z2-9]{6}$/.test(code||'')){showOnlineError('Enter the six-character room code.');return}var target=db.ref('chessRooms/'+code);showOnlineError('');
     ensureOnlineAuth(function(){readRoomOnce(target,function(snapshot){var room=snapshot.val();if(!room){showOnlineError('No room was found with that code.');return}if(room.players&&room.players.black){showOnlineError('That room already has two players.');return}if(room.status==='finished'){showOnlineError('That game has already finished.');return}target.update({'players/black':{name:onlineName,connected:true},status:'playing',updatedAt:firebase.database.ServerValue.TIMESTAMP}).then(function(){mode='online';newGame('b','online');attachRoom(code,'b');track('online_room_joined')}).catch(function(){showOnlineError('Could not join that room. Try again.')})})})
   }
   function syncOnlineMove(ended){if(!roomRef)return;var payload={fen:boardToFen(state),turn:state.turn,moves:onlineMoves,status:ended?'finished':'playing',result:ended?gameResult:'',updatedAt:firebase.database.ServerValue.TIMESTAMP};roomRef.update(payload).catch(function(){showOnlineError('Your move did not sync. Check your connection before continuing.')})}
   function finishOnline(result){if(!roomRef||!onlineRoom||onlineRoom.status==='finished')return;roomRef.update({status:'finished',result:result,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){showOnlineError('Could not finish the game. Try again.')})}
   function rematchOnline(){if(!roomRef)return;var start=initial(),status=onlineRoom&&onlineRoom.players&&onlineRoom.players.black?'playing':'waiting';onlineMoves=[];roomRef.update({fen:boardToFen(start),turn:'w',status:status,moves:[],result:'',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(function(){showOnlineError('Could not start the rematch. Try again.')})}
   function leaveOnline(nextMode){
+    var leavingRef=roomRef;
     if(roomRef){roomRef.child('players/'+(player==='w'?'white':'black')+'/connected').onDisconnect().cancel();roomRef.child('players/'+(player==='w'?'white':'black')+'/connected').set(false)}
+    if(leavingRef){
+      /* Cleanup: once this player has left, a finished room with nobody connected is removed so old rooms do not pile up. Rooms still in play, and finished rooms with a player still present, are left alone so rematch keeps working. Best effort and silent on failure. */
+      try{
+        leavingRef.once('value').then(function(snap){
+          var room=snap.val();if(!room||room.status!=='finished')return;
+          var players=room.players||{};
+          if(players.white&&players.white.connected===true)return;
+          if(players.black&&players.black.connected===true)return;
+          try{var rp=leavingRef.remove();if(rp&&rp.then)rp.then(function(){bumpRoomsActive(-1)},function(){});else if(rp&&rp.catch)rp.catch(function(){})}catch(e){}
+        }).catch(function(){});
+      }catch(e){}
+    }
     if(roomRef&&roomListener)roomRef.off('value',roomListener);if(db&&presenceListener)db.ref('.info/connected').off('value',presenceListener);roomRef=null;roomListener=null;presenceListener=null;roomCode='';onlineRoom=null;onlineReady=false;lastOpponentConnected=null;onlineLobby.style.display='block';roomView.classList.remove('show');onlineGameControls.classList.remove('show');mode=nextMode||'ai';newGame('w',mode)
   }
   function enterOnlineMode(){if(mode==='online')return;mode='online';track('mode_selected',{mode:'online'});newGame('w','online');onlineLobby.style.display='block';roomView.classList.remove('show');roomCode='';onlineRoom=null;onlineReady=false;showOnlineError('');syncModeUI();render()}
@@ -694,7 +759,7 @@
   clueBtn.onclick=function(){if(!cluesUnlocked())return;if(!canMoveNow()){showClueText('Clues are available on your turn.');return}var m=bestClueMove();if(!m)return;clueMove=m;showClueText('Clue: try '+notation(state,m,apply(state,m))+', '+sqName(m.from)+' to '+sqName(m.to)+'.');render()};
   document.getElementById('idleYesBtn').onclick=function(){hideIdlePopup();armIdleTimer()};
   document.getElementById('idleNoBtn').onclick=idleResign;
-  undoBtn.onclick=function(){if(mode==='online'||aiBusy||!history.length)return;gameVersion++;var count=(mode==='ai'&&state.turn===player)?Math.min(2,history.length):1;while(count--&&history.length){var h=history.pop();state=h.state;stats=h.stats}gameOver=false;gameEndType='';gameResult='';selected=null;legalForSelected=[];clueMove=null;clueText.hidden=true;analysisEl.classList.remove('show');say('start');render();persistGame();armIdleTimer()};
+  undoBtn.onclick=function(){if(mode==='online'||aiBusy||!history.length)return;gameVersion++;var count=(mode==='ai'&&state.turn===player)?Math.min(2,history.length):1;while(count--&&history.length){var h=history.pop();state=h.state;stats=h.stats}gameOver=false;gameEndType='';gameResult='';selected=null;legalForSelected=[];clueMove=null;clueText.hidden=true;analysisEl.classList.remove('show');say('start');render();refreshMyPresenceStatus();persistGame();armIdleTimer()};
   document.getElementById('loginBtn').onclick=function(){openAuth('login')};document.getElementById('profileBtn').onclick=openDashboard;document.getElementById('authUser').onclick=function(){if(isMember())openDashboard()};document.getElementById('dashClose').onclick=closeDashboard;dashModal.onclick=function(e){if(e.target===dashModal)closeDashboard()};document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dashModal.classList.contains('show'))closeDashboard()});document.getElementById('signupBtn').onclick=function(){openAuth('signup')};document.getElementById('authLoginTab').onclick=function(){setAuthMode('login')};document.getElementById('authSignupTab').onclick=function(){setAuthMode('signup')};document.getElementById('authClose').onclick=closeAuth;
   authModal.onclick=function(e){if(e.target===authModal)closeAuth()};document.addEventListener('keydown',function(e){if(e.key==='Escape'&&authModal.classList.contains('show'))closeAuth()});
   var authBusy=false;
@@ -747,8 +812,235 @@
     phoneConfirmation.confirm(code).then(function(){finish();track('login');closeAuth()}).catch(function(error){finish();showPhoneError(authMessage(error))});
   };
   document.getElementById('phoneResendBtn').onclick=function(){resetPhoneVerifier();phoneConfirmation=null;document.getElementById('phoneStep2').hidden=true;document.getElementById('phoneStep1').hidden=false;showPhoneError('');showPhoneNote('Enter your number and tap Send code by text to get a fresh code.')};
+  /* Friends system: friend codes, presence, and challenges. Every read and write is best effort and fails silently so the game keeps working offline or when a write is denied. Only auto-generated Guest names are used, never emails or real names. */
+  var friendsModal=document.getElementById('friendsModal'),friendsOffline=document.getElementById('friendsOffline'),friendsMain=document.getElementById('friendsMain'),friendCodeText=document.getElementById('friendCodeText'),addFriendInput=document.getElementById('addFriendInput'),addFriendMsg=document.getElementById('addFriendMsg'),friendsListEl=document.getElementById('friendsList');
+  var inviteModal=document.getElementById('inviteModal'),inviteText=document.getElementById('inviteText');
+  var myFriendCode=null,friendCodeBusy=false,friendCodeWaiters=[];
+  var friendsRef=null,friendsData={},friendPresenceRefs={},friendPresenceData={},friendsRefreshTimer=null;
+  var myPresenceRef=null,myPresenceStatus='online',myPresenceTimer=null,myPresenceUid=null;
+  var invitesRef=null,currentInvite=null,inviteNote='';
+  function myUid(){if(currentUser)return currentUser.uid;if(auth&&auth.currentUser)return auth.currentUser.uid;return null}
+  function formatFriendCode(code){return code?code.slice(0,3)+'-'+code.slice(3):'------'}
+  function generateFriendCode(){var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789',out='';for(var i=0;i<6;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out}
+  function ensureFriendCode(done){
+    done=done||function(){};
+    if(myFriendCode){done(myFriendCode);return}
+    friendCodeWaiters.push(done);if(friendCodeBusy)return;
+    var uid=myUid();
+    if(!db||!uid){var early=friendCodeWaiters;friendCodeWaiters=[];early.forEach(function(f){try{f(null)}catch(e){}});return}
+    friendCodeBusy=true;
+    var finish=function(code){friendCodeBusy=false;var ws=friendCodeWaiters;friendCodeWaiters=[];ws.forEach(function(f){try{f(code)}catch(e){}})};
+    try{
+      db.ref('chessUsers/'+uid+'/friendCode').once('value').then(function(snap){
+        var existing=snap.val();
+        if(existing){myFriendCode=String(existing).toUpperCase().replace(/[^A-Z2-9]/g,'');try{var uw=db.ref('chessUsers/'+uid).update({name:onlineName});if(uw&&uw.catch)uw.catch(function(){})}catch(e){}finish(myFriendCode);return}
+        claim(0);
+      }).catch(function(){finish(null)});
+    }catch(e){finish(null)}
+    function claim(attempt){
+      if(attempt>=10){finish(null);return}
+      var code=generateFriendCode(),codeRef;
+      try{codeRef=db.ref('chessFriendCodes/'+code)}catch(e){finish(null);return}
+      try{
+        codeRef.transaction(function(current){if(current===null)return uid;return}).then(function(result){
+          if(result&&result.committed){myFriendCode=code;try{var w=db.ref('chessUsers/'+uid).update({friendCode:code,name:onlineName});if(w&&w.catch)w.catch(function(){})}catch(e){}finish(code)}
+          else claim(attempt+1);
+        }).catch(function(){claim(attempt+1)});
+      }catch(e){claim(attempt+1)}
+    }
+  }
+  function showAddFriendMsg(text){addFriendMsg.textContent=text||'';addFriendMsg.classList.toggle('show',!!text)}
+  function backfillFriendName(uid,fuid,done){
+    /* Presence is friends-only readable, so a new friend's name can only be read after the friendship entry exists. Best effort: any failure leaves the stored name empty. */
+    var finish=function(n){try{done(n||'')}catch(e){}};
+    try{
+      db.ref('chessPresence/'+fuid).once('value').then(function(psnap){
+        var p=psnap.val();
+        if(p&&p.name){var nm=String(p.name);try{var u=db.ref('chessFriends/'+uid+'/'+fuid).update({name:nm});if(u&&u.catch)u.catch(function(){})}catch(e){}finish(nm)}
+        else finish('');
+      }).catch(function(){finish('')});
+    }catch(e){finish('')}
+  }
+  function addFriend(){
+    showAddFriendMsg('');
+    if(!db||!myUid()){showAddFriendMsg("Couldn't connect. Friends need a connection.");return}
+    var code=String(addFriendInput.value||'').toUpperCase().replace(/[-\s]/g,'');
+    if(!/^[A-Z2-9]{6}$/.test(code)){showAddFriendMsg("That code doesn't look right. Codes look like ABC-123.");return}
+    ensureFriendCode(function(myCode){
+      if(myCode&&code===myCode){showAddFriendMsg("That's your own code. Share it with a friend instead.");return}
+      var uid=myUid();if(!uid)return;
+      try{
+        db.ref('chessFriendCodes/'+code).once('value').then(function(snap){
+          var fuid=snap.val();
+          if(!fuid){showAddFriendMsg('No player found with that code. Check the code and try again.');return}
+          if(fuid===uid){showAddFriendMsg("That's your own code. Share it with a friend instead.");return}
+          try{
+            db.ref('chessFriends/'+uid+'/'+fuid).once('value').then(function(fsnap){
+              if(fsnap.exists()){var fd=fsnap.val()||{};showAddFriendMsg((fd.name||'That player')+' is already in your friends list.');return}
+              try{
+                var w=db.ref('chessFriends/'+uid+'/'+fuid).set({code:code,name:'',addedAt:firebase.database.ServerValue.TIMESTAMP});
+                var doneAdd=function(){track('friend_added');addFriendInput.value='';showAddFriendMsg('Friend added to your friends list.');renderFriendsList();backfillFriendName(uid,fuid,function(nm){if(nm)showAddFriendMsg(nm+' added to your friends list.')})};
+                if(w&&w.then)w.then(doneAdd,function(){showAddFriendMsg("Couldn't connect. Friends need a connection.")});else doneAdd();
+              }catch(e){showAddFriendMsg("Couldn't connect. Friends need a connection.")}
+            }).catch(function(){showAddFriendMsg("Couldn't connect. Friends need a connection.")});
+          }catch(e){showAddFriendMsg("Couldn't connect. Friends need a connection.")}
+        }).catch(function(){showAddFriendMsg("Couldn't connect. Friends need a connection.")});
+      }catch(e){showAddFriendMsg("Couldn't connect. Friends need a connection.")}
+    });
+  }
+  function computeMyPresenceStatus(){
+    if(mode==='online')return (onlineRoom&&onlineRoom.status==='playing')?'in-game':'online';
+    return (history.length>0&&!gameOver)?'in-game':'online';
+  }
+  function writeMyPresence(){
+    if(!myPresenceRef)return;
+    try{var w=myPresenceRef.set({name:onlineName,status:myPresenceStatus,ts:firebase.database.ServerValue.TIMESTAMP});if(w&&w.catch)w.catch(function(){})}catch(e){}
+  }
+  function refreshMyPresenceStatus(){
+    if(!myPresenceRef)return;var s=computeMyPresenceStatus();if(s===myPresenceStatus)return;myPresenceStatus=s;writeMyPresence();
+  }
+  function startMyPresence(){
+    var uid=myUid();if(!db||!uid)return;
+    if(myPresenceRef&&myPresenceUid===uid)return;
+    stopMyPresence();
+    myPresenceUid=uid;myPresenceStatus=computeMyPresenceStatus();
+    try{myPresenceRef=db.ref('chessPresence/'+uid);myPresenceRef.onDisconnect().remove()}catch(e){myPresenceRef=null;myPresenceUid=null;return}
+    writeMyPresence();
+    myPresenceTimer=window.setInterval(function(){myPresenceStatus=computeMyPresenceStatus();writeMyPresence()},60000);
+  }
+  function stopMyPresence(){
+    if(myPresenceTimer){window.clearInterval(myPresenceTimer);myPresenceTimer=null}
+    if(myPresenceRef){try{myPresenceRef.onDisconnect().cancel()}catch(e){}try{var w=myPresenceRef.remove();if(w&&w.catch)w.catch(function(){})}catch(e){}myPresenceRef=null;myPresenceUid=null}
+  }
+  function startFriendsListener(){
+    var uid=myUid();if(!db||!uid||friendsRef)return;
+    try{
+      friendsRef=db.ref('chessFriends/'+uid);
+      friendsRef.on('value',function(snap){friendsData=snap.val()||{};syncFriendPresenceListeners();renderFriendsList()},function(){});
+    }catch(e){friendsRef=null}
+  }
+  function stopFriendsListener(){
+    if(friendsRef){try{friendsRef.off()}catch(e){}friendsRef=null}
+    Object.keys(friendPresenceRefs).forEach(function(u){try{friendPresenceRefs[u].off()}catch(e){}});friendPresenceRefs={};friendPresenceData={};friendsData={};
+  }
+  function syncFriendPresenceListeners(){
+    if(!db)return;
+    Object.keys(friendPresenceRefs).forEach(function(u){if(!friendsData[u]){try{friendPresenceRefs[u].off()}catch(e){}delete friendPresenceRefs[u];delete friendPresenceData[u]}});
+    Object.keys(friendsData).forEach(function(u){
+      if(friendPresenceRefs[u])return;
+      try{var r=db.ref('chessPresence/'+u);friendPresenceRefs[u]=r;r.on('value',function(snap){friendPresenceData[u]=snap.val();renderFriendsList()},function(){})}catch(e){}
+    });
+  }
+  function friendStatusOf(fuid){
+    var p=friendPresenceData[fuid];if(!p||!p.ts)return 'offline';
+    if(Date.now()-Number(p.ts)>150000)return 'offline';
+    return p.status==='in-game'?'in-game':'online';
+  }
+  function friendDisplayName(fuid){
+    var f=friendsData[fuid]||{},p=friendPresenceData[fuid];
+    if(p&&p.name)return String(p.name);
+    if(f.name)return String(f.name);
+    return 'Friend '+(f.code||'');
+  }
+  function renderFriendsList(){
+    if(!friendsListEl)return;
+    var uids=Object.keys(friendsData||{});
+    friendsListEl.innerHTML='';
+    if(!uids.length){var empty=document.createElement('div');empty.className='friends-empty';empty.textContent='No friends yet. Share your code to get started.';friendsListEl.appendChild(empty);return}
+    uids.sort(function(a,b){return friendDisplayName(a).localeCompare(friendDisplayName(b))});
+    uids.forEach(function(fuid){
+      var f=friendsData[fuid]||{},status=friendStatusOf(fuid),displayName=friendDisplayName(fuid);
+      var row=document.createElement('div');row.className='friend-row';
+      var dot=document.createElement('span');dot.className='friend-dot '+status;row.appendChild(dot);
+      var nm=document.createElement('span');nm.className='friend-name';nm.textContent=displayName;row.appendChild(nm);
+      var st=document.createElement('span');st.className='friend-status';st.textContent=status==='online'?'Online':(status==='in-game'?'In a game':'Offline');row.appendChild(st);
+      if(status==='online'){var btn=document.createElement('button');btn.type='button';btn.className='online-action';btn.textContent='Challenge';(function(uid2,name2){btn.onclick=function(){challengeFriend(uid2,name2)}})(fuid,displayName);row.appendChild(btn)}
+      friendsListEl.appendChild(row);
+    });
+  }
+  function challengeFriend(fuid,fname){
+    if(!db||!myUid())return;
+    closeFriendsPanel();
+    if(roomRef)leaveOnline('ai');
+    if(mode!=='online')enterOnlineMode();
+    createRoom(function(code){
+      var uid=myUid();if(!uid)return;
+      try{var w=db.ref('chessInvites/'+fuid).push({fromUid:uid,fromName:onlineName,roomCode:code,ts:firebase.database.ServerValue.TIMESTAMP});if(w&&w.catch)w.catch(function(){})}catch(e){}
+      inviteNote='Invite sent to '+fname+'.';try{roomMeta.textContent=inviteNote}catch(e){}
+      track('challenge_sent');
+    });
+  }
+  function startInviteListener(){
+    var uid=myUid();if(!db||!uid||invitesRef)return;
+    try{
+      invitesRef=db.ref('chessInvites/'+uid);
+      invitesRef.on('child_added',function(snap){handleInvite(snap)},function(){});
+    }catch(e){invitesRef=null}
+  }
+  function stopInviteListener(){
+    if(invitesRef){try{invitesRef.off()}catch(e){}invitesRef=null}
+    currentInvite=null;inviteModal.classList.remove('show');
+  }
+  function removeInvite(key){
+    if(!invitesRef||!key)return;
+    try{var w=invitesRef.child(key).remove();if(w&&w.catch)w.catch(function(){})}catch(e){}
+  }
+  function handleInvite(snap){
+    try{
+      var invite=snap.val(),key=snap.key,uid=myUid();
+      if(!invite||!invite.roomCode||!invite.fromUid||!invite.ts){removeInvite(key);return}
+      if(invite.fromUid===uid){removeInvite(key);return}
+      if(Date.now()-Number(invite.ts)>120000){removeInvite(key);return}
+      if(gameInProgress()||(mode==='online'&&onlineRoom&&onlineRoom.status==='playing')){removeInvite(key);return}
+      if(currentInvite){removeInvite(key);return}
+      currentInvite={invite:invite,key:key};
+      inviteText.textContent=(invite.fromName||'A player')+' challenged you to a game.';
+      inviteModal.classList.add('show');
+    }catch(e){}
+  }
+  document.getElementById('inviteAcceptBtn').onclick=function(){
+    if(!currentInvite)return;
+    var inv=currentInvite.invite,key=currentInvite.key;currentInvite=null;inviteModal.classList.remove('show');removeInvite(key);track('challenge_accepted');
+    if(mode!=='online')enterOnlineMode();
+    joinRoomWithCode(inv.roomCode);
+  };
+  document.getElementById('inviteDeclineBtn').onclick=function(){
+    if(!currentInvite)return;
+    var key=currentInvite.key;currentInvite=null;inviteModal.classList.remove('show');removeInvite(key);
+  };
+  function openFriendsPanel(){
+    friendsModal.classList.add('show');showAddFriendMsg('');
+    if(!db){friendsOffline.hidden=false;friendsMain.hidden=true;return}
+    friendsOffline.hidden=true;friendsMain.hidden=false;
+    friendCodeText.textContent=myFriendCode?formatFriendCode(myFriendCode):'------';
+    var proceed=function(){
+      if(!myUid()){friendsOffline.hidden=false;friendsMain.hidden=true;return}
+      friendsOffline.hidden=true;friendsMain.hidden=false;
+      ensureFriendCode(function(code){friendCodeText.textContent=code?formatFriendCode(code):'Unavailable'});
+      startFriendsListener();renderFriendsList();
+    };
+    if(!myUid()&&auth){try{auth.signInAnonymously().then(function(){proceed()},function(){proceed()})}catch(e){proceed()}}
+    else proceed();
+    if(!friendsRefreshTimer)friendsRefreshTimer=window.setInterval(function(){if(friendsModal.classList.contains('show'))renderFriendsList()},30000);
+  }
+  function closeFriendsPanel(){friendsModal.classList.remove('show')}
+  document.getElementById('friendsBtn').onclick=openFriendsPanel;
+  document.getElementById('friendsClose').onclick=closeFriendsPanel;
+  friendsModal.onclick=function(e){if(e.target===friendsModal)closeFriendsPanel()};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&friendsModal.classList.contains('show'))closeFriendsPanel()});
+  document.getElementById('copyFriendCodeBtn').onclick=function(){
+    if(!myFriendCode)return;var btn=this,text=formatFriendCode(myFriendCode);
+    var done=function(){btn.textContent='Copied';window.setTimeout(function(){btn.textContent='Copy'},1400)};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(function(){});
+  };
+  document.getElementById('addFriendBtn').onclick=addFriend;
+  addFriendInput.onkeydown=function(e){if(e.key==='Enter')addFriend()};
+  function onFriendsAuth(user){
+    if(user){startMyPresence();startFriendsListener();startInviteListener()}
+    else{stopMyPresence();stopFriendsListener();stopInviteListener();myFriendCode=null;friendsData={};renderFriendsList()}
+  }
   document.getElementById('logoutBtn').onclick=function(){if(auth)auth.signOut().catch(function(){})};
-  if(auth)auth.onAuthStateChanged(function(user){currentUser=user||null;updateAuthUI();refreshClueAccess()});
+  if(auth)auth.onAuthStateChanged(function(user){currentUser=user||null;updateAuthUI();refreshClueAccess();onFriendsAuth(user)});
   updateClueUI();
   var bootSaved=readSavedGame();
   newGame('w','ai');
